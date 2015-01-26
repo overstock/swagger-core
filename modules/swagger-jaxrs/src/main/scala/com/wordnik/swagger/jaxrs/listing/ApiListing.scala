@@ -33,7 +33,7 @@ object ApiListingCache extends ReaderUtil {
 
   var _cache: Option[Map[String, ApiListing]] = None
 
-  def listing(docRoot: String, app: Application, sc: ServletConfig): Option[Map[String, ApiListing]] = {
+  def listing(docRoot: String, app: Application): Option[Map[String, ApiListing]] = {
     _cache.orElse{
       LOGGER.debug("loading cache")
       ClassReaders.reader.map{reader => 
@@ -82,7 +82,7 @@ class ApiListingResource {
   ): Response = {
     val docRoot = this.getClass.getAnnotation(classOf[Path]).value
     val f = new SpecFilter
-    val listings = ApiListingCache.listing(docRoot, app, sc).map(specs => {
+    val listings = ApiListingCache.listing(docRoot, app).map(specs => {
       (for(spec <- specs.values) 
         yield f.filter(spec, FilterFactory.filter, paramsToMap(uriInfo.getQueryParameters), cookiesToMap(headers), headersToMap(headers))
       ).filter(m => m.apis.size > 0)
@@ -118,7 +118,7 @@ class ApiListingResource {
     val f = new SpecFilter
     val pathPart = cleanRoute(route)
     LOGGER.debug("requested route " + pathPart)
-    val listings = ApiListingCache.listing(docRoot, app, sc).map(specs => {
+    val listings = ApiListingCache.listing(docRoot, app).map(specs => {
       (for(spec <- specs.values) yield {
         LOGGER.debug("inspecting path " + spec.resourcePath)
         f.filter(spec, FilterFactory.filter, paramsToMap(uriInfo.getQueryParameters), cookiesToMap(headers), headersToMap(headers))
